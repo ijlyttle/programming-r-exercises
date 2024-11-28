@@ -60,7 +60,7 @@ poss_read_csv("not/a/file.csv")
 poss_read_csv(I("a, b\n 1, 2"), col_types = "dd")
 
 # modify read-function to return NULL, rather than throw error
-possibly_read_excel <- possibly() # we do the rest
+poss_read_excel <- possibly() # we do the rest
 
 data_party <-
   data_party <-
@@ -81,6 +81,15 @@ paths_party |>
   keep(is.null)
 
 identical(data_party, data)
+
+## Fundamental operators
+num <- 1:4
+
+num |> map_int(\(x) x + 1)
+
+num |> keep(\(x) x %% 2 == 0)
+
+num |> reduce(\(acc, x) acc + x)
 
 ## Horrible example
 
