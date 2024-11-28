@@ -78,6 +78,15 @@ paths_party |>
 
 identical(data_party, data)
 
+## Fundamental operators
+num <- 1:4
+
+num |> map_int(\(x) x + 1)
+
+num |> keep(\(x) x %% 2 == 0)
+
+num |> reduce(\(acc, x) acc + x)
+
 ## Horrible example
 
 # keep only non-null elements
