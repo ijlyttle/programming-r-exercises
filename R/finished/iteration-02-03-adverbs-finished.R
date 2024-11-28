@@ -24,10 +24,13 @@ paths_party <-
   set_names(get_year) |>
   print()
 
+# modify read-function to return NULL, rather than throw error
+poss_read_excel <- possibly(read_excel, otherwise = NULL, quiet = FALSE)
+
 data_party <-
   paths_party |>
   # read each file from excel
-  map(read_excel) |>
+  map(poss_read_excel) |>
   # keep only non-null elements
   # set list-names as column `year`
   # bind into single data-frame
@@ -35,9 +38,6 @@ data_party <-
   # convert year to number
   mutate(year = parse_number(year)) |>
   print()
-
-# modify read-function to return NULL, rather than throw error
-poss_read_excel <- possibly() # we do the rest
 
 # intermediate step - see which one failed
 paths_party |>
@@ -53,7 +53,7 @@ paths_party |>
 data_horrible <-
   paths_party |>
   map(poss_read_excel) |>
-  # keep(negate(is.null)) |>
-  # imap(\(df, name) mutate(df, "year" := parse_number(name))) |>
-  # reduce(rbind) |>
+  keep(negate(is.null)) |>
+  imap(\(df, name) mutate(df, "year" := parse_number(name))) |>
+  reduce(rbind) |>
   print()
