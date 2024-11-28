@@ -5,7 +5,7 @@ library("here")
 library("fs")
 
 ## Aside
-here("data/file.csv")
+here("data/gapminder/1952.xlsx")
 
 ## Our turn
 data1952 <- read_excel(here("data/gapminder/1952.xlsx"))
