@@ -10,16 +10,21 @@ ggplot(penguins, aes(x = bill_length_mm, y = bill_depth_mm, color = species)) +
 
 tolower(c("Emma", "Ian"))
 
+ggplot(penguins, aes(x = bill_length_mm, color = species)) +
+  stat_ecdf()
+
 ## Our turn: Labeller
 
 # percent_labeller is a function
 # scales::label_percent() is a function factory
 percent_labeller <- scales::label_percent(accuracy = 1)
 
-percent_labeller(c(0, 0.01, 0.1, 1))
+percent_labeller(c(0, 0.1, 0.234, 1))
 
-## Your turn: Labeller
+## Your turn
 
 # add `scale_y_continuous()` to ecdf plot, using the `labels` argument
 ggplot(penguins, aes(x = bill_length_mm, color = species)) +
-  stat_ecdf()
+  stat_ecdf() +
+  scale_y_continuous(labels = scales::label_percent(accuracy = 1))
+
