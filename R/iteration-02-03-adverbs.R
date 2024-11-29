@@ -44,13 +44,13 @@ paths_party |>
   map(poss_read_excel) |>
   keep(is.null)
 
-## Implement `list_rbind()` ourselves
+## Our Turn: re-implement `list_rbind()`
 
 # keep only non-null elements
 # set list-names as column `year`
 # bind into single data-frame
 
-data_horrible <-
+data_reimplemented <-
   paths_party |>
   map(poss_read_excel) |>
   # keep(negate(is.null)) |>
