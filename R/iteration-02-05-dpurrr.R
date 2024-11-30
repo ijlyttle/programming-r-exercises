@@ -45,18 +45,26 @@ mtcars |>
   dpurrr_to_tibble() |>
   print()
 
+wt_min_max <- function(acc, d) {
+  list(
+    wt_min = min(acc$wt_min, d$wt),
+    wt_max = max(acc$wt_max, d$wt)
+  )
+}
+
+mtcars |>
+  dpurrr_to_list() |>
+  dpurrr_summarise(wt_min_max) |>
+  dpurrr_to_tibble() |>
+  print()
+
 mtcars |>
   split(mtcars$gear) |>
   imap(
-    \(.x, name) {
+    function(.x, name) {
       .x |>
         dpurrr_to_list() |>
-        dpurrr_summarise(
-          \(acc, val) list(
-            wt_min = min(acc$wt_min, val$wt),
-            wt_max = max(acc$wt_max, val$wt)
-          )
-        ) |>
+        dpurrr_summarise(wt_min_max) |>
         dpurrr_mutate(\(d) list(gear = as.integer(name))) |>
         dpurrr_to_tibble()
     }
