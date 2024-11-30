@@ -27,43 +27,38 @@ dpurrr_mutate <- function(.x, mapper) {
 mtcars |>
   dpurrr_to_list() |>
   dpurrr_mutate(\(d) list(wt_kg = d$wt * 1000 / 2.2)) |>
-  dpurrr_to_tibble()
+  dpurrr_to_tibble() |>
+  print()
+
+dpurrr_summarise <- function(.x, reducer) {
+  .x |> purrr::reduce(reducer) |> list()
+}
 
 mtcars |>
   dpurrr_to_list() |>
-  reduce(
-    \(acc, val) list(
-      wt_min = min(acc$wt_min, val$wt),
-      wt_max = max(acc$wt_max, val$wt)
-    ),
-    .init = list(wt_min = Inf, wt_max = -Inf)
+  dpurrr_summarise(
+    \(acc, d) list(
+      wt_min = min(acc$wt_min, d$wt),
+      wt_max = max(acc$wt_max, d$wt)
+    )
   ) |>
-  list() |>
-  dpurrr_to_tibble()
+  dpurrr_to_tibble() |>
+  print()
 
 mtcars |>
   split(mtcars$gear) |>
-  map(
-    \(.data) {
-      .data |>
+  imap(
+    \(.x, name) {
+      .x |>
         dpurrr_to_list() |>
-        reduce(
+        dpurrr_summarise(
           \(acc, val) list(
             wt_min = min(acc$wt_min, val$wt),
             wt_max = max(acc$wt_max, val$wt)
-          ),
-          .init = list(wt_min = Inf, wt_max = -Inf)
+          )
         ) |>
-        list() |>
-        dpurrr_to_tibble()
-    }
-  ) |>
-  imap(
-    \(.data, name) {
-      .data |>
-        dpurrr_to_list() |>
         dpurrr_mutate(\(d) list(gear = as.integer(name))) |>
-        dpurrr_to_data_frame()
+        dpurrr_to_tibble()
     }
   ) |>
   reduce(rbind) |>
