@@ -1,5 +1,6 @@
 ## dplyr using purrr (if time permits)
 
+library("conflicted")
 library("purrr")
 
 # start with a couple of helpers
@@ -14,6 +15,13 @@ dpurrr_to_tibble <- function(.x) {
     purrr::list_transpose() |>
     tibble::as_tibble()
 }
+
+# try out our helpers
+mtcars |>
+  head(1) |>
+  dpurrr_to_list() |>
+  dpurrr_to_tibble() |>
+  print()
 
 # filter can be a purrr::keep()
 mtcars |>
@@ -67,8 +75,8 @@ mtcars |>
 mtcars |>
   split(mtcars$gear) |>
   imap(
-    function(.x, name) {
-      .x |>
+    function(.data, name) {
+      .data |>
         dpurrr_to_list() |>
         dpurrr_summarise(wt_min_max) |>
         dpurrr_mutate(\(d) list(gear = as.integer(name))) |>
