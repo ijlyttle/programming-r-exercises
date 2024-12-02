@@ -12,18 +12,18 @@ penguins_local <-
   select(species, island, body_mass_g, sex) |>      # fewer columns
   print()
 
-#' @param .data  data frame or tibble
-#' @return unnamed list of named lists
+#' @param .data data frame or tibble
+#' @return unnamed list of named lists, i.e. transposed data frame
 dpurrr_to_list <- function(.data) {
   .data |>
     as.list() |>
     purrr::list_transpose(simplify = FALSE)
 }
 
-#' @param .x  unnamed list of named lists
+#' @param .d unnamed list of named lists, i.e. transposed data frame
 #' @return tibble
-dpurrr_to_tibble <- function(.x) {
-  .x |>
+dpurrr_to_tibble <- function(.d) {
+  .d |>
     purrr::list_transpose() |>
     tibble::as_tibble()
 }
@@ -42,29 +42,46 @@ penguins_local |>
   dpurrr_to_tibble() |>
   print()
 
-# mutate is purrr::map(), with a little extra to keep current elements of list
-dpurrr_mutate <- function(.x, mapper) {
-  .x |> purrr::map(\(d) modifyList(d, mapper(d)))
+#' @param .d unnamed list of named lists, i.e. transposed data frame
+#' @param mapper function applied to each member of `.d`
+#' @return unnamed list of named lists, i.e. transposed data frame
+dpurrr_mutate <- function(.d, mapper) {
+  # modifyList() used to keep current elements
+  .d |> purrr::map(\(d) modifyList(d, mapper(d)))
 }
 
-penguins |>
+penguins_local |>
   dpurrr_to_list() |>
   dpurrr_mutate(\(d) list(body_mass_kg = d$body_mass_g / 1000)) |>
   dpurrr_to_tibble() |>
   print()
 
-# summarise is reduce, but result wrapped in a list
-dpurrr_summarise <- function(.x, reducer) {
-  .x |> purrr::reduce(reducer) |> list()
+#' @param .d unnamed list of named lists, i.e. transposed data frame
+#' @param reducer function applied accumulator and to each member of `.d`
+#' @param .init initial value of accumulator, if empty: first element of `.d`
+#' @param ... other arguments passed to `purrr::reduce()`
+#' @return unnamed list of named lists, i.e. transposed data frame
+dpurrr_summarise <- function(.d, reducer, .init, ...) {
+  # wrap result in a list, to return a transposed data frame
+  .d |> purrr::reduce(reducer, .init = .init, ...) |> list()
 }
 
-penguins |>
+penguins_local |>
   dpurrr_to_list() |>
   dpurrr_summarise(
     \(acc, d) list(
       body_mass_g_min = min(acc$body_mass_g_min, d$body_mass_g, na.rm = TRUE),
       body_mass_g_max = max(acc$body_mass_g_max, d$body_mass_g, na.rm = TRUE)
     )
+  ) |>
+  dpurrr_to_tibble() |>
+  print()
+
+penguins_local |>
+  dpurrr_to_list() |>
+  dpurrr_summarise(
+    \(acc, d) list(count = acc$count + 1),
+    .init = list(count = 0)
   ) |>
   dpurrr_to_tibble() |>
   print()
@@ -77,25 +94,55 @@ body_mass_g_min_max <- function(acc, d) {
   )
 }
 
-penguins |>
+penguins_local |>
   dpurrr_to_list() |>
   dpurrr_summarise(body_mass_g_min_max) |>
   dpurrr_to_tibble() |>
   print()
 
-# add in a group-by
-penguins |>
-  split(penguins$species) |>
+#' @param .d unnamed list of named lists, i.e. transposed data frame
+#' @param name string, name of variable on which to split
+#' @return named list of transposed data frames, names: values of split variable
+dpurrr_split <- function(.d, name) {
+
+  # get unique values of .d[[name]]
+  d_name <- .d |> purrr::map(\(d) d[[name]]) |> unique()
+  names(d_name) <- d_name
+
+  # for each element of name, a collection of .d rows that "contain" the name
+  d_name |>
+    purrr::map(\(x) .d |> purrr::keep(\(d) d[[name]] == x))
+}
+
+penguins_local |>
+  dpurrr_to_list() |>
+  dpurrr_split("species") |>
   imap(
-    function(.data, name) {
-      .data |>
-        dpurrr_to_list() |>
+    function(.d, name) {
+      .d |>
         dpurrr_summarise(body_mass_g_min_max) |>
-        dpurrr_mutate(\(d) list(species = name)) |>
-        dpurrr_to_tibble()
+        dpurrr_mutate(\(d) list(species = name))
     }
   ) |>
-  reduce(rbind) |>
+  reduce(c) |>
+  dpurrr_to_tibble() |>
+  print()
+
+penguins_local |>
+  dpurrr_to_list() |>
+  dpurrr_split("species") |>
+  imap(
+    function(.d, name) {
+      .d |>
+        dpurrr_summarise(
+          \(acc, d) list(count = acc$count + 1),
+          .init = list(count = 0)
+        ) |>
+        dpurrr_mutate(\(d) list(species = name))
+    }
+  ) |>
+  reduce(c) |>
+  dpurrr_to_tibble() |>
   print()
 
 
